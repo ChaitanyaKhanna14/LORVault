@@ -1,0 +1,199 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  TEACHER
+  STUDENT
+  EXTERNAL
+}
+
+enum UserStatus {
+  INVITED
+  REGISTERED
+}
+
+enum LorStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+  REVOKED
+}
+
+enum VerifyResult {
+  VERIFIED
+  NOT_FOUND
+  REVOKED
+}
+
+enum NotificationType {
+  LOR_SUBMITTED
+  LOR_APPROVED
+  LOR_REJECTED
+  LOR_REVOKED
+  LOR_VERIFIED
+  CONSENT_REQUIRED
+}
+
+// ---------- Models ----------
+
+model Institution {
+  id        String   @id @default(uuid())
+  name      String
+  domain    String?
+  code      String   @unique // e.g. "IITB-2026"
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+  lors  Lor[]
+
+  @@map("institutions")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String
+  fullName     String
+  role         Role
+  studentId    String? // only for students
+  status       UserStatus @default(INVITED)
+  invitedAt    DateTime?
+  registeredAt DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+
+  // Relations
+  writtenLors   Lor[]          @relation("TeacherLors")
+  receivedLors  Lor[]          @relation("StudentLors")
+  consents      Consent[]
+  notifications Notification[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Lor {
+  id              String    @id @default(uuid())
+  title           String // e.g. "Recommendation for MS CS"
+  subject         String // e.g. "Computer Science"
+  status          LorStatus @default(SUBMITTED)
+  originalPdfUrl  String // teacher's uploaded PDF
+  canonicalPdfUrl String? // PDF with QR footer (after approval)
+  hash            String? // SHA256 of canonical PDF
+  blockchainTxId  String? // mock chain record ID
+  rejectionReason String?
+  revokeReason    String?
+  submittedAt     DateTime  @default(now())
+  approvedAt      DateTime?
+  revokedAt       DateTime?
+  updatedAt       DateTime  @updatedAt
+
+  teacherId String
+  teacher   User   @relation("TeacherLors", fields: [teacherId], references: [id])
+
+  studentId String
+  student   User   @relation("StudentLors", fields: [studentId], references: [id])
+
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+
+  // Relations
+  consent       Consent?
+  verifications VerificationLog[]
+  notifications Notification[]
+
+  // One LOR per teacher-student pair
+  @@unique([teacherId, studentId])
+  @@map("lors")
+}
+
+model Consent {
+  id             String    @id @default(uuid())
+  acknowledged   Boolean   @default(false)
+  acknowledgedAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  lorId String @unique
+  lor   Lor    @relation(fields: [lorId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  @@map("consents")
+}
+
+model VerificationLog {
+  id                  String       @id @default(uuid())
+  verifierEmail       String?
+  verifierInstitution String?
+  uploadedHash        String
+  result              VerifyResult
+  verifiedAt          DateTime     @default(now())
+
+  lorId String?
+  lor   Lor?    @relation(fields: [lorId], references: [id])
+
+  @@map("verification_logs")
+}
+
+model BlockchainRecord {
+  id           String    @id @default(uuid())
+  hash         String    @unique
+  studentId    String
+  teacherId    String
+  institutionId String
+  lorId        String    @unique
+  revoked      Boolean   @default(false)
+  revokeReason String?
+  createdAt    DateTime  @default(now())
+  revokedAt    DateTime?
+
+  @@map("blockchain_records")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  lorId String?
+  lor   Lor?    @relation(fields: [lorId], references: [id])
+
+  @@map("notifications")
+}

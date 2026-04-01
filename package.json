@@ -1,0 +1,25 @@
+{
+  "name": "lorvault",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "mobile": "npm run start --workspace=@lorvault/mobile",
+    "mobile:android": "npm run android --workspace=@lorvault/mobile",
+    "mobile:ios": "npm run ios --workspace=@lorvault/mobile",
+    "server": "npm run start:dev --workspace=@lorvault/server",
+    "server:build": "npm run build --workspace=@lorvault/server",
+    "shared:build": "npm run build --workspace=@lorvault/shared",
+    "db:generate": "npm run db:generate --workspace=@lorvault/server",
+    "db:migrate": "npm run db:migrate --workspace=@lorvault/server",
+    "db:seed": "npm run db:seed --workspace=@lorvault/server",
+    "setup": "node scripts/setup.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
