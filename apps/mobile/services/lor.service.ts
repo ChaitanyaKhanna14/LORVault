@@ -1,5 +1,5 @@
 import { api } from './api';
-import { Lor, LorStatus, PaginatedResponse } from '@/utils/shared';
+import { Lor, LorStatus } from '@/utils/shared';
 
 export const lorService = {
   create: async (data: { title: string; subject: string; studentId: string; pdf: any }): Promise<Lor> => {

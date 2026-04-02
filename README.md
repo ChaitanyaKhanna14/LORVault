@@ -1,5 +1,7 @@
 # LORVault
 
+![CI](https://github.com/ChaitanyaKhanna14/LORVault/actions/workflows/ci.yml/badge.svg)
+
 A multi-tenant, blockchain-backed Letter of Recommendation verification platform.
 
 ## Quick Start with Supabase
@@ -33,6 +35,37 @@ npm run server
 8. In a new terminal, start mobile:
 
 npm run mobile
+
+## Quick Start with Docker
+
+If you have Docker installed, the easiest way to run LORVault:
+
+```bash
+# 1. Copy environment template
+cp .env.docker .env
+
+# 2. Start all services (PostgreSQL + API)
+docker-compose up -d
+
+# 3. Run database migrations
+docker-compose exec server npx prisma migrate deploy
+
+# 4. Seed demo data
+docker-compose exec server npx prisma db seed
+
+# 5. View logs
+docker-compose logs -f server
+```
+
+The API will be available at `http://localhost:3000`
+
+**Docker Commands:**
+```bash
+docker-compose up -d      # Start services
+docker-compose down       # Stop services
+docker-compose logs -f    # View logs
+docker-compose ps         # Check status
+```
 
 ## Features
 
@@ -122,6 +155,18 @@ After seeding, these accounts are available:
 | Student | student@demo.edu | demo123 |
 
 **Institution Code:** `DEMO-2026`
+
+## API Documentation
+
+Interactive API documentation is available at:
+```
+http://localhost:3000/api/docs
+```
+
+This provides a Swagger UI where you can:
+- View all endpoints with request/response schemas
+- Test API calls directly from the browser
+- Authenticate with JWT tokens
 
 ## API Endpoints
 

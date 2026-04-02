@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-and-build:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install server dependencies
+        run: cd server && npm ci
+
+      - name: Install shared dependencies
+        run: cd shared && npm ci
+
+      - name: Build shared types
+        run: cd shared && npm run build
+
+      - name: Lint server
+        run: cd server && npm run lint
+
+      - name: Build server
+        run: cd server && npm run build
+        env:
+          # Skip Prisma generate since we don't have a DB in CI
+          SKIP_PRISMA: true
+
+  typecheck:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install shared dependencies
+        run: cd shared && npm ci
+
+      - name: Build shared types
+        run: cd shared && npm run build
+
+      - name: TypeCheck shared
+        run: cd shared && npx tsc --noEmit

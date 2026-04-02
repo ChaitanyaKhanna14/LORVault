@@ -1,8 +1,7 @@
-import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
-import { Role } from '@/utils/shared';
+import { Role } from '@lorvault/shared';
 
 export default function Index() {
   const { isAuthenticated, isLoading, user } = useAuthStore();

@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Alert,
-  FlatList,
-} from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '@/services/user.service';
 import { Button } from '@/components/ui/Button';
@@ -28,12 +21,12 @@ export default function ManageUsersScreen() {
   const [studentName, setStudentName] = useState('');
   const [studentId, setStudentId] = useState('');
 
-  const { data: teachers, isLoading: loadingTeachers } = useQuery({
+  const { data: teachers, isLoading: _loadingTeachers } = useQuery({
     queryKey: ['teachers'],
     queryFn: () => userService.getTeachers(),
   });
 
-  const { data: students, isLoading: loadingStudents } = useQuery({
+  const { data: students, isLoading: _loadingStudents } = useQuery({
     queryKey: ['students'],
     queryFn: () => userService.getStudents(),
   });

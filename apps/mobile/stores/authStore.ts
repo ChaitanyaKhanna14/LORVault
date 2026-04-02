@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { User, AuthTokens, Role } from '@/utils/shared';
+import { User, AuthTokens } from '@/utils/shared';
 import { authService } from '@/services/auth.service';
 import { api } from '@/services/api';
 
 // Fallback storage for web/unsupported platforms
 let memoryStorage: Record<string, string> = {};
 
-const storage = {
+const _storage = {
   getItem: async (key: string): Promise<string | null> => {
     try {
       if (Platform.OS === 'web') {

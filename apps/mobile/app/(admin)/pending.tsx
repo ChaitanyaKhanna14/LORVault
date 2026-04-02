@@ -1,16 +1,14 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, RefreshControl, Alert } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { lorService } from '@/services/lor.service';
-import { LorCard } from '@/components/LorCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { COLORS } from '@/utils/constants';
 import { LorStatus } from '@/utils/shared';
 
 export default function PendingScreen() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const { data: lors, isLoading, refetch } = useQuery({
@@ -21,7 +19,7 @@ export default function PendingScreen() {
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [])
+    }, [refetch])
   );
 
   const approveMutation = useMutation({
