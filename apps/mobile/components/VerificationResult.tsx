@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { VerificationResponse, VerifyResult } from '@/utils/shared';
 import { Card } from './ui/Card';
 import { VerifyBadge } from './ui/Badge';
-import { COLORS } from '@/utils/constants';
+import { COLORS, VERIFY_COLORS } from '@/utils/constants';
 import { formatDateTime } from '@/utils/formatters';
 
 interface VerificationResultProps {

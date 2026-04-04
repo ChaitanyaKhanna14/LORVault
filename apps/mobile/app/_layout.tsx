@@ -31,7 +31,7 @@ export default function RootLayout() {
       }
     };
     init();
-  }, [initialize]);
+  }, []);
 
   if (error) {
     return (

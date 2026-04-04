@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { Lor } from '@/utils/shared';
 import { Card, CardHeader } from './ui/Card';
 import { StatusBadge } from './ui/Badge';

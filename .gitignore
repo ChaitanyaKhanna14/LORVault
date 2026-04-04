@@ -24,7 +24,6 @@ build/
 .env.development
 .env.production
 .env.test
-.env.docker
 
 # Logs
 *.log
@@ -69,9 +68,7 @@ apps/mobile/build/
 
 # NestJS specific
 server/dist/
-server/.env
 server/.env.local
-server/uploads/
 
 # Shared package
 shared/dist/
@@ -80,9 +77,3 @@ shared/dist/
 .AppleDouble
 .LSOverride
 *.localized
-
-# Docker
-*.env.local
-
-# Uploads (user files)
-uploads/

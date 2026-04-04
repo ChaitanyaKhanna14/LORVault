@@ -1,14 +1,11 @@
 import { useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, RefreshControl, TouchableOpacity, Share } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { lorService } from '@/services/lor.service';
 import { Card } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { SkeletonList } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { COLORS } from '@/utils/constants';
 import { formatDate } from '@/utils/formatters';
 import { useAuthStore } from '@/stores/authStore';
@@ -18,7 +15,7 @@ export default function StudentDashboard() {
   const { logout } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const { data: lors, isLoading, isError, error, refetch, isRefetching } = useQuery({
+  const { data: lors, isLoading, refetch } = useQuery({
     queryKey: ['student-lors'],
     queryFn: () => lorService.getAll(),
   });
@@ -26,7 +23,7 @@ export default function StudentDashboard() {
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch])
+    }, [])
   );
 
   const acknowledgeMutation = useMutation({
@@ -48,54 +45,23 @@ export default function StudentDashboard() {
     }
   };
 
-  // Show skeleton on initial load
-  if (isLoading && !lors) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Letters of Recommendation</Text>
-          <TouchableOpacity onPress={logout}>
-            <Text style={styles.logout}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-        <SkeletonList count={3} />
-      </View>
-    );
-  }
-
-  // Show error state
-  if (isError) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Letters of Recommendation</Text>
-          <TouchableOpacity onPress={logout}>
-            <Text style={styles.logout}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-        <ErrorMessage 
-          message={error?.message || 'Failed to load your letters of recommendation'} 
-          onRetry={refetch}
-        />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Letters of Recommendation</Text>
+        <Text style={styles.title}>My Letters of Recommendation</Text>
         <TouchableOpacity onPress={logout}>
           <Text style={styles.logout}>Logout</Text>
         </TouchableOpacity>
       </View>
 
       {lors && lors.length === 0 ? (
-        <EmptyState
-          icon="📄"
-          title="No LORs yet"
-          message="Your teachers haven't submitted any letters of recommendation for you yet."
-        />
+        <View style={styles.empty}>
+          <Text style={styles.emptyIcon}>📄</Text>
+          <Text style={styles.emptyText}>No LORs yet</Text>
+          <Text style={styles.emptySubtext}>
+            Your teachers haven't submitted any letters of recommendation for you yet.
+          </Text>
+        </View>
       ) : (
         <FlatList
           data={lors}
@@ -166,10 +132,9 @@ export default function StudentDashboard() {
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl
-              refreshing={isRefetching}
+              refreshing={isLoading}
               onRefresh={refetch}
               tintColor={COLORS.primary}
-              colors={[COLORS.primary]}
             />
           }
         />
@@ -188,11 +153,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
   },
   title: {
     fontSize: 16,
@@ -262,5 +222,26 @@ const styles = StyleSheet.create({
   rejectionText: {
     fontSize: 13,
     color: COLORS.text,
+  },
+  empty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+    textAlign: 'center',
   },
 });
