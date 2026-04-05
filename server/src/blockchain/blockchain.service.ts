@@ -20,9 +20,9 @@ export interface VerificationResult {
     teacherId: string;
     institutionId: string;
     revoked: boolean;
-    revokeReason?: string;
+    revokeReason: string | null;
     createdAt: Date;
-    revokedAt?: Date;
+    revokedAt: Date | null;
   };
 }
 
