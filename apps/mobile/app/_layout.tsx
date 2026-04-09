@@ -3,7 +3,18 @@ import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
+import * as Sentry from '@sentry/react-native';
 import { useAuthStore } from '@/stores/authStore';
+
+// Initialize Sentry for crash reporting
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  enabled: process.env.NODE_ENV === 'production',
+  tracesSampleRate: 0.2, // 20% of transactions for performance monitoring
+  _experiments: {
+    profilesSampleRate: 0.1, // 10% of transactions for profiling
+  },
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,7 +25,7 @@ const queryClient = new QueryClient({
   },
 });
 
-export default function RootLayout() {
+function RootLayoutContent() {
   const { initialize } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -24,7 +35,7 @@ export default function RootLayout() {
       try {
         await initialize();
       } catch (e: any) {
-        console.error('Init error:', e);
+        Sentry.captureException(e);
         setError(e?.message || 'Unknown error');
       } finally {
         setReady(true);
@@ -77,4 +88,8 @@ export default function RootLayout() {
       </Stack>
     </QueryClientProvider>
   );
+}
+
+// Wrap with Sentry for automatic error boundary
+export default Sentry.wrap(RootLayoutContent);
 }

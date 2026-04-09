@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ---------- Enums ----------
@@ -87,6 +88,8 @@ model User {
   notifications Notification[]
   refreshTokens RefreshToken[]
 
+  @@index([institutionId])
+  @@index([role])
   @@map("users")
 }
 
@@ -134,6 +137,10 @@ model Lor {
 
   // One LOR per teacher-student pair
   @@unique([teacherId, studentId])
+  @@index([institutionId])
+  @@index([teacherId])
+  @@index([studentId])
+  @@index([status])
   @@map("lors")
 }
 
@@ -195,5 +202,7 @@ model Notification {
   lorId String?
   lor   Lor?    @relation(fields: [lorId], references: [id])
 
+  @@index([userId, read])
+  @@index([userId, createdAt])
   @@map("notifications")
 }

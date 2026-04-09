@@ -40,6 +40,13 @@ export default function TeacherLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="lor/[id]"
+        options={{
+          href: null, // Hide from tab bar
+          title: 'LOR Details',
+        }}
+      />
     </Tabs>
   );
 }

@@ -1,58 +1,98 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class FileService {
-  private uploadDir: string;
+  private supabase: SupabaseClient;
+  private bucket: string;
+  private readonly logger = new Logger(FileService.name);
 
   constructor(private configService: ConfigService) {
-    this.uploadDir = this.configService.get('UPLOAD_DIR') || './uploads';
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_KEY');
+    this.bucket = this.configService.get<string>('SUPABASE_BUCKET') || 'lors';
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_KEY are required');
+    }
+
+    this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
   async saveOriginalPdf(buffer: Buffer, originalFilename: string): Promise<string> {
-    const dir = path.join(this.uploadDir, 'originals');
-    await fs.mkdir(dir, { recursive: true });
+    const filename = `originals/${uuidv4()}.pdf`;
 
-    const filename = `${uuidv4()}.pdf`;
-    const filepath = path.join(dir, filename);
+    const { error } = await this.supabase.storage
+      .from(this.bucket)
+      .upload(filename, buffer, {
+        contentType: 'application/pdf',
+        upsert: false,
+      });
 
-    await fs.writeFile(filepath, buffer);
+    if (error) {
+      this.logger.error(`Failed to upload original PDF: ${error.message}`);
+      throw new Error(`Failed to upload file: ${error.message}`);
+    }
 
-    return `originals/${filename}`;
+    return filename;
   }
 
   async saveCanonicalPdf(buffer: Buffer, lorId: string): Promise<string> {
-    const dir = path.join(this.uploadDir, 'canonical');
-    await fs.mkdir(dir, { recursive: true });
+    const filename = `canonical/${lorId}.pdf`;
 
-    const filename = `${lorId}.pdf`;
-    const filepath = path.join(dir, filename);
+    const { error } = await this.supabase.storage
+      .from(this.bucket)
+      .upload(filename, buffer, {
+        contentType: 'application/pdf',
+        upsert: true, // Overwrite if exists
+      });
 
-    await fs.writeFile(filepath, buffer);
+    if (error) {
+      this.logger.error(`Failed to upload canonical PDF: ${error.message}`);
+      throw new Error(`Failed to upload file: ${error.message}`);
+    }
 
-    return `canonical/${filename}`;
+    return filename;
   }
 
   async readPdf(relativePath: string): Promise<Buffer> {
-    const filepath = path.join(this.uploadDir, relativePath);
+    const { data, error } = await this.supabase.storage
+      .from(this.bucket)
+      .download(relativePath);
 
-    try {
-      return await fs.readFile(filepath);
-    } catch (error) {
+    if (error || !data) {
+      this.logger.error(`Failed to download PDF: ${error?.message}`);
       throw new NotFoundException('PDF file not found');
     }
+
+    // Convert Blob to Buffer
+    const arrayBuffer = await data.arrayBuffer();
+    return Buffer.from(arrayBuffer);
   }
 
   async deletePdf(relativePath: string): Promise<void> {
-    const filepath = path.join(this.uploadDir, relativePath);
+    const { error } = await this.supabase.storage
+      .from(this.bucket)
+      .remove([relativePath]);
 
-    try {
-      await fs.unlink(filepath);
-    } catch (error) {
-      // Ignore if file doesn't exist
+    if (error) {
+      // Log but don't throw - file might not exist
+      this.logger.warn(`Failed to delete PDF: ${error.message}`);
     }
+  }
+
+  // Get a signed URL for direct download (optional - for better performance)
+  async getSignedUrl(relativePath: string, expiresIn: number = 3600): Promise<string> {
+    const { data, error } = await this.supabase.storage
+      .from(this.bucket)
+      .createSignedUrl(relativePath, expiresIn);
+
+    if (error || !data?.signedUrl) {
+      throw new NotFoundException('Could not generate download URL');
+    }
+
+    return data.signedUrl;
   }
 }

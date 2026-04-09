@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install root dependencies
@@ -42,6 +42,45 @@ jobs:
           # Skip Prisma generate since we don't have a DB in CI
           SKIP_PRISMA: true
 
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install server dependencies
+        run: cd server && npm ci
+
+      - name: Install shared dependencies
+        run: cd shared && npm ci
+
+      - name: Build shared types
+        run: cd shared && npm run build
+
+      - name: Run server tests
+        run: cd server && npm test -- --coverage --passWithNoTests
+        env:
+          JWT_SECRET: test-jwt-secret-for-ci
+          NODE_ENV: test
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          directory: ./server/coverage
+          fail_ci_if_error: false
+        continue-on-error: true
+
   typecheck:
     name: TypeScript Check
     runs-on: ubuntu-latest
@@ -53,7 +92,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies

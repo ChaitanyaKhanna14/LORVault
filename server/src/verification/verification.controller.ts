@@ -4,12 +4,16 @@ import {
   Post,
   Param,
   Body,
+  Query,
+  UseGuards,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { VerificationService } from './verification.service';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('verify')
 export class VerificationController {
@@ -35,6 +39,17 @@ export class VerificationController {
       verifierEmail: body.verifierEmail,
       verifierInstitution: body.verifierInstitution,
     });
+  }
+
+  // Get verification history for external verifier (by email)
+  @Get('history/my')
+  @UseGuards(AuthGuard('jwt'))
+  async getMyHistory(
+    @CurrentUser() user: any,
+    @Query('email') email?: string,
+  ) {
+    const searchEmail = email || user.email;
+    return this.verificationService.getHistoryByEmail(searchEmail);
   }
 
   // Public endpoint - no auth required (from QR code)

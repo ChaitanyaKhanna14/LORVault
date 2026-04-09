@@ -1,6 +1,19 @@
 // ============================================
 // LORVault Shared Types
 // ============================================
+//
+// These types are shared between:
+// - Mobile app (imports directly from @lorvault/shared)
+// - Server (uses @prisma/client types which are structurally identical)
+//
+// The enums and interfaces here MUST stay in sync with:
+// - server/prisma/schema.prisma (database enums)
+// - apps/mobile usage
+//
+// NOTE: Server imports from @prisma/client for auto-generated types that
+// match the database schema. Mobile imports from here. Both are compatible
+// because they use the same string values.
+// ============================================
 
 // ---------- Enums ----------
 

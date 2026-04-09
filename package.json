@@ -10,12 +10,16 @@
   "overrides": {
     "lodash": "4.18.1",
     "picomatch": "4.0.4",
-    "path-to-regexp": "8.4.2"
+    "path-to-regexp": "8.4.2",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "scripts": {
     "mobile": "npm run start --workspace=@lorvault/mobile",
     "mobile:android": "npm run android --workspace=@lorvault/mobile",
     "mobile:ios": "npm run ios --workspace=@lorvault/mobile",
+    "web": "npm run dev --workspace=@lorvault/web",
+    "web:build": "npm run build --workspace=@lorvault/web",
     "server": "npm run start:dev --workspace=@lorvault/server",
     "server:build": "npm run build --workspace=@lorvault/server",
     "shared:build": "npm run build --workspace=@lorvault/shared",

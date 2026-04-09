@@ -144,4 +144,26 @@ export class VerificationService {
       take: 50,
     });
   }
+
+  async getHistoryByEmail(email: string) {
+    return this.prisma.verificationLog.findMany({
+      where: {
+        verifierEmail: email,
+      },
+      include: {
+        lor: {
+          select: {
+            id: true,
+            title: true,
+            subject: true,
+            teacher: { select: { fullName: true } },
+            student: { select: { fullName: true } },
+            institution: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { verifiedAt: 'desc' },
+      take: 50,
+    });
+  }
 }

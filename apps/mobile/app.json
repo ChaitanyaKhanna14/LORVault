@@ -43,10 +43,24 @@
         {
           "iCloudContainerEnvironment": "Production"
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "lorvault",
+          "project": "lorvault-mobile"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "hooks": {
+      "postPublish": [
+        {
+          "file": "@sentry/react-native/expo/hooks/postPublish"
+        }
+      ]
     }
   }
 }

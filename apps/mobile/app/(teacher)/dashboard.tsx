@@ -23,7 +23,7 @@ export default function TeacherDashboard() {
   );
 
   const handleLorPress = (lorId: string) => {
-    router.push(`/(teacher)/lor/${lorId}`);
+    router.push(`/(teacher)/lor/${lorId}` as any);
   };
 
   return (

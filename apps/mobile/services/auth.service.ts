@@ -8,7 +8,7 @@ import {
 } from '@/utils/shared';
 
 // Mock mode - set to false when backend is ready
-const MOCK_MODE = true;
+const MOCK_MODE = false;
 
 const createMockResponse = (email: string, role: Role, fullName?: string): AuthResponse => ({
   user: {

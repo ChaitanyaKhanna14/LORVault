@@ -15,8 +15,8 @@ const storage = {
         return memoryStorage[key] || null;
       }
       return await SecureStore.getItemAsync(key);
-    } catch (e) {
-      console.warn('SecureStore read failed, using memory:', e);
+    } catch {
+      // SecureStore not available, fall back to memory
       return memoryStorage[key] || null;
     }
   },
@@ -27,8 +27,8 @@ const storage = {
         return;
       }
       await SecureStore.setItemAsync(key, value);
-    } catch (e) {
-      console.warn('SecureStore write failed, using memory:', e);
+    } catch {
+      // SecureStore not available, fall back to memory
       memoryStorage[key] = value;
     }
   },
@@ -39,8 +39,8 @@ const storage = {
         return;
       }
       await SecureStore.deleteItemAsync(key);
-    } catch (e) {
-      console.warn('SecureStore delete failed:', e);
+    } catch {
+      // SecureStore not available, fall back to memory
       delete memoryStorage[key];
     }
   },
@@ -108,7 +108,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ isLoading: false });
       }
     } catch (error) {
-      console.error('Failed to initialize auth:', error);
+      // Auth initialization failed, user will need to log in again
       set({ isLoading: false });
     }
   },

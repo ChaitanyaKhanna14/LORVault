@@ -1,12 +1,18 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(UserService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({
@@ -71,6 +77,12 @@ export class UserService {
       throw new ConflictException('User with this email already exists');
     }
 
+    // Get institution name for email
+    const institution = await this.prisma.institution.findUnique({
+      where: { id: institutionId },
+      select: { name: true },
+    });
+
     // Generate temporary password
     const tempPassword = uuidv4().slice(0, 8);
     const passwordHash = await bcrypt.hash(tempPassword, 10);
@@ -87,13 +99,23 @@ export class UserService {
       },
     });
 
-    // TODO: Send email with temporary password
+    // Send invitation email
+    const emailSent = await this.emailService.sendTeacherInvite(
+      email,
+      fullName,
+      institution?.name || 'Your Institution',
+      tempPassword,
+    );
+
+    if (!emailSent) {
+      this.logger.warn(`Failed to send invitation email to ${email}`);
+    }
 
     return {
       id: teacher.id,
       email: teacher.email,
       fullName: teacher.fullName,
-      tempPassword, // Return for testing; in production, only send via email
+      tempPassword, // Return for dev/testing; in production email is the primary delivery
     };
   }
 

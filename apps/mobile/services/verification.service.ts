@@ -1,5 +1,21 @@
 import { api } from './api';
-import { VerificationResponse } from '@/utils/shared';
+import { VerificationResponse, VerificationLog } from '@/utils/shared';
+
+export interface VerificationHistoryItem {
+  id: string;
+  result: string;
+  verifiedAt: string;
+  verifierEmail?: string;
+  verifierInstitution?: string;
+  lor?: {
+    id: string;
+    title: string;
+    subject: string;
+    teacher?: { fullName: string };
+    student?: { fullName: string };
+    institution?: { name: string };
+  };
+}
 
 export const verificationService = {
   verifyByUpload: async (data: {
@@ -26,6 +42,11 @@ export const verificationService = {
 
   verifyByLorId: async (lorId: string): Promise<VerificationResponse> => {
     const response = await api.get<VerificationResponse>(`/verify/${lorId}`);
+    return response.data;
+  },
+
+  getMyHistory: async (): Promise<VerificationHistoryItem[]> => {
+    const response = await api.get<VerificationHistoryItem[]>('/verify/history/my');
     return response.data;
   },
 };

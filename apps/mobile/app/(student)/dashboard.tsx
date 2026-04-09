@@ -40,8 +40,8 @@ export default function StudentDashboard() {
         message: `Verify my Letter of Recommendation: ${shareUrl}`,
         url: shareUrl,
       });
-    } catch (error) {
-      console.error('Share failed:', error);
+    } catch {
+      // Share was cancelled or failed - no action needed
     }
   };
 

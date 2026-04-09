@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Build output (we build fresh in Docker)
+dist
+
+# Environment files (use Docker env vars)
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Test files
+coverage
+*.spec.ts
+test
+
+# Documentation
+*.md
+!README.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploads (should use cloud storage in production)
+uploads
+
+# Logs
+*.log
+logs
