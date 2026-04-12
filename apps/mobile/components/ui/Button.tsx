@@ -1,6 +1,13 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
-import { COLORS } from '@/utils/constants';
+import {
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+  Animated,
+} from 'react-native';
+import { useTheme } from '@/stores/themeStore';
 
 interface ButtonProps {
   title: string;
@@ -10,6 +17,7 @@ interface ButtonProps {
   loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  icon?: React.ReactNode;
 }
 
 export function Button({
@@ -20,60 +28,114 @@ export function Button({
   loading = false,
   style,
   textStyle,
+  icon,
 }: ButtonProps) {
+  const { colors, typography, radius } = useTheme();
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
+
   const getBackgroundColor = () => {
-    if (disabled) return '#4B5563';
+    if (disabled) return colors.surfaceContainerHighest;
     switch (variant) {
-      case 'primary': return COLORS.primary;
-      case 'secondary': return COLORS.secondary;
-      case 'danger': return COLORS.danger;
-      case 'outline': return 'transparent';
-      default: return COLORS.primary;
+      case 'primary':
+        return colors.primary;
+      case 'secondary':
+        return colors.surfaceContainerHighest;
+      case 'danger':
+        return colors.error;
+      case 'outline':
+        return 'transparent';
+      default:
+        return colors.primary;
     }
   };
 
-  const getBorderColor = () => {
-    if (variant === 'outline') return COLORS.primary;
-    return 'transparent';
+  const getTextColor = () => {
+    if (disabled) return colors.onSurfaceVariant;
+    switch (variant) {
+      case 'primary':
+        return colors.onPrimary;
+      case 'secondary':
+        return colors.onSurface;
+      case 'danger':
+        return colors.onError;
+      case 'outline':
+        return colors.primary;
+      default:
+        return colors.onPrimary;
+    }
   };
 
-  const getTextColor = () => {
-    if (variant === 'outline') return COLORS.primary;
-    return '#FFFFFF';
+  const getBorderStyle = (): ViewStyle => {
+    if (variant === 'outline') {
+      return {
+        borderWidth: 1.5,
+        borderColor: disabled ? colors.outlineVariant : colors.outline,
+      };
+    }
+    return {};
   };
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.button,
-        { backgroundColor: getBackgroundColor(), borderColor: getBorderColor() },
-        variant === 'outline' && styles.outline,
-        style,
-      ]}
-      onPress={onPress}
-      disabled={disabled || loading}
-    >
-      {loading ? (
-        <ActivityIndicator color={getTextColor()} />
-      ) : (
-        <Text style={[styles.text, { color: getTextColor() }, textStyle]}>{title}</Text>
-      )}
-    </TouchableOpacity>
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        style={[
+          {
+            backgroundColor: getBackgroundColor(),
+            borderRadius: radius.full,
+            paddingVertical: 16,
+            paddingHorizontal: 24,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'row',
+            gap: 8,
+          },
+          getBorderStyle(),
+          style,
+        ]}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled || loading}
+        activeOpacity={0.9}
+      >
+        {loading ? (
+          <ActivityIndicator color={getTextColor()} size="small" />
+        ) : (
+          <>
+            {icon}
+            <Text
+              style={[
+                {
+                  color: getTextColor(),
+                  fontFamily: typography.titleMd.fontFamily,
+                  fontSize: typography.titleMd.fontSize,
+                },
+                textStyle,
+              ]}
+            >
+              {title}
+            </Text>
+          </>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  button: {
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  outline: {
-    borderWidth: 2,
-  },
-  text: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

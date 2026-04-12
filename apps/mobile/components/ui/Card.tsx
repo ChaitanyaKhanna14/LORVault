@@ -1,19 +1,54 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
-import { COLORS } from '@/utils/constants';
+import { View, Text, TouchableOpacity, ViewStyle } from 'react-native';
+import { useTheme } from '@/stores/themeStore';
 
 interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   onPress?: () => void;
+  /** Use 'elevated' for ambient shadow, 'filled' for bg color only */
+  variant?: 'elevated' | 'filled' | 'outlined';
 }
 
-export function Card({ children, style, onPress }: CardProps) {
+export function Card({ children, style, onPress, variant = 'elevated' }: CardProps) {
+  const { colors, shadows, radius } = useTheme();
   const Container = onPress ? TouchableOpacity : View;
+
+  const getVariantStyle = (): ViewStyle => {
+    switch (variant) {
+      case 'elevated':
+        return {
+          backgroundColor: colors.surfaceContainerLowest,
+          ...shadows.card,
+        };
+      case 'filled':
+        return {
+          backgroundColor: colors.surfaceContainerLow,
+        };
+      case 'outlined':
+        return {
+          backgroundColor: colors.surfaceContainerLowest,
+          borderWidth: 1,
+          borderColor: colors.outlineVariant + '26', // 15% opacity
+        };
+      default:
+        return {
+          backgroundColor: colors.surfaceContainerLowest,
+        };
+    }
+  };
 
   return (
     <Container
-      style={[styles.card, style]}
+      style={[
+        {
+          borderRadius: radius['2xl'],
+          padding: 24,
+          marginBottom: 12,
+        },
+        getVariantStyle(),
+        style,
+      ]}
       onPress={onPress}
       activeOpacity={onPress ? 0.7 : 1}
     >
@@ -29,43 +64,39 @@ interface CardHeaderProps {
 }
 
 export function CardHeader({ title, subtitle, right }: CardHeaderProps) {
+  const { colors, typography } = useTheme();
+
   return (
-    <View style={styles.header}>
-      <View style={styles.headerText}>
-        <Text style={styles.title}>{title}</Text>
-        {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 16,
+      }}
+    >
+      <View style={{ flex: 1, marginRight: right ? 12 : 0 }}>
+        <Text
+          style={{
+            ...typography.titleLg,
+            color: colors.onSurface,
+            marginBottom: subtitle ? 4 : 0,
+          }}
+        >
+          {title}
+        </Text>
+        {subtitle && (
+          <Text
+            style={{
+              ...typography.bodyMd,
+              color: colors.onSurfaceVariant,
+            }}
+          >
+            {subtitle}
+          </Text>
+        )}
       </View>
       {right && <View>{right}</View>}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  headerText: {
-    flex: 1,
-    marginRight: 12,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-  },
-});

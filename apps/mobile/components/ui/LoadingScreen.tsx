@@ -1,30 +1,33 @@
 import React from 'react';
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
-import { COLORS } from '@/utils/constants';
+import { View, ActivityIndicator, Text } from 'react-native';
+import { useTheme } from '@/stores/themeStore';
 
 interface LoadingScreenProps {
   message?: string;
 }
 
 export function LoadingScreen({ message = 'Loading...' }: LoadingScreenProps) {
+  const { colors, typography, spacing } = useTheme();
+
   return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color={COLORS.primary} />
-      <Text style={styles.message}>{message}</Text>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: colors.surface,
+      }}
+    >
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text
+        style={{
+          ...typography.bodyMd,
+          color: colors.onSurfaceVariant,
+          marginTop: spacing.md,
+        }}
+      >
+        {message}
+      </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-  },
-  message: {
-    marginTop: 16,
-    fontSize: 16,
-    color: COLORS.textMuted,
-  },
-});

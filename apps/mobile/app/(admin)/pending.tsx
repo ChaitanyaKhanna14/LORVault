@@ -1,17 +1,17 @@
-import { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, RefreshControl, Alert } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
+import { View, Text, FlatList, RefreshControl, Alert } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { lorService } from '@/services/lor.service';
-import { LorCard } from '@/components/LorCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { COLORS } from '@/utils/constants';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { useTheme } from '@/stores/themeStore';
 import { LorStatus } from '@/utils/shared';
 
 export default function PendingScreen() {
-  const router = useRouter();
   const queryClient = useQueryClient();
+  const { colors, typography, spacing } = useTheme();
 
   const { data: lors, isLoading, refetch } = useQuery({
     queryKey: ['pending-lors'],
@@ -55,11 +55,7 @@ export default function PendingScreen() {
       `Are you sure you want to approve "${title}"? This will generate the canonical PDF with QR code and store the hash on the blockchain.`,
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Approve',
-          style: 'default',
-          onPress: () => approveMutation.mutate(id),
-        },
+        { text: 'Approve', style: 'default', onPress: () => approveMutation.mutate(id) },
       ]
     );
   };
@@ -87,132 +83,73 @@ export default function PendingScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
       {lors && lors.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>✅</Text>
-          <Text style={styles.emptyText}>No pending LORs</Text>
-          <Text style={styles.emptySubtext}>
-            All letters of recommendation have been reviewed
-          </Text>
-        </View>
+        <EmptyState
+          icon="✅"
+          title="No pending LORs"
+          message="All letters of recommendation have been reviewed"
+        />
       ) : (
         <FlatList
           data={lors}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <Card style={styles.card}>
-              <View style={styles.cardContent}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.subject}>{item.subject}</Text>
-                <View style={styles.details}>
-                  <Text style={styles.detail}>
-                    <Text style={styles.label}>Teacher: </Text>
-                    {item.teacher?.fullName}
+            <View style={{ paddingHorizontal: spacing.xl }}>
+              <Card>
+                <View style={{ marginBottom: spacing.md }}>
+                  <Text style={{ ...typography.titleLg, color: colors.onSurface, marginBottom: 4 }}>
+                    {item.title}
                   </Text>
-                  <Text style={styles.detail}>
-                    <Text style={styles.label}>Student: </Text>
-                    {item.student?.fullName} ({item.student?.studentId})
+                  <Text style={{ ...typography.bodyMd, color: colors.onSurfaceVariant, marginBottom: spacing.sm }}>
+                    {item.subject}
                   </Text>
+
+                  <View
+                    style={{
+                      backgroundColor: colors.surfaceContainerLow,
+                      borderRadius: 8,
+                      padding: spacing.sm,
+                    }}
+                  >
+                    <Text style={{ ...typography.bodySm, color: colors.onSurface, marginBottom: 4 }}>
+                      <Text style={{ color: colors.onSurfaceVariant }}>Teacher: </Text>
+                      {item.teacher?.fullName}
+                    </Text>
+                    <Text style={{ ...typography.bodySm, color: colors.onSurface }}>
+                      <Text style={{ color: colors.onSurfaceVariant }}>Student: </Text>
+                      {item.student?.fullName} ({item.student?.studentId})
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.actions}>
-                <Button
-                  title="Approve"
-                  variant="secondary"
-                  onPress={() => handleApprove(item.id, item.title)}
-                  loading={approveMutation.isPending}
-                  style={styles.actionButton}
-                />
-                <Button
-                  title="Reject"
-                  variant="danger"
-                  onPress={() => handleReject(item.id, item.title)}
-                  loading={rejectMutation.isPending}
-                  style={styles.actionButton}
-                />
-              </View>
-            </Card>
+
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                  <View style={{ flex: 1 }}>
+                    <Button
+                      title="Approve"
+                      variant="primary"
+                      onPress={() => handleApprove(item.id, item.title)}
+                      loading={approveMutation.isPending}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Button
+                      title="Reject"
+                      variant="danger"
+                      onPress={() => handleReject(item.id, item.title)}
+                      loading={rejectMutation.isPending}
+                    />
+                  </View>
+                </View>
+              </Card>
+            </View>
           )}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: spacing['2xl'] }}
           refreshControl={
-            <RefreshControl
-              refreshing={isLoading}
-              onRefresh={refetch}
-              tintColor={COLORS.primary}
-            />
+            <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} colors={[colors.primary]} />
           }
         />
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  list: {
-    padding: 16,
-  },
-  card: {
-    marginBottom: 16,
-  },
-  cardContent: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  subject: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    marginBottom: 12,
-  },
-  details: {
-    backgroundColor: COLORS.background,
-    borderRadius: 8,
-    padding: 12,
-  },
-  detail: {
-    fontSize: 13,
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  label: {
-    color: COLORS.textMuted,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 12,
-  },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-  },
-});

@@ -2,9 +2,23 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import * as Sentry from '@sentry/react-native';
+import { useFonts } from 'expo-font';
+import {
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
+} from '@expo-google-fonts/manrope';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from '@expo-google-fonts/inter';
 import { useAuthStore } from '@/stores/authStore';
+import { useThemeStore, useTheme } from '@/stores/themeStore';
 
 // Initialize Sentry for crash reporting
 Sentry.init({
@@ -26,14 +40,28 @@ const queryClient = new QueryClient({
 });
 
 function RootLayoutContent() {
-  const { initialize } = useAuthStore();
+  const { initialize: initAuth } = useAuthStore();
+  const { initialize: initTheme } = useThemeStore();
+  const { colors, isDark } = useTheme();
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+
+  const [fontsLoaded] = useFonts({
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+    Manrope_800ExtraBold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+  });
 
   useEffect(() => {
     const init = async () => {
       try {
-        await initialize();
+        await initTheme();
+        await initAuth();
       } catch (e: any) {
         Sentry.captureException(e);
         setError(e?.message || 'Unknown error');
@@ -46,36 +74,38 @@ function RootLayoutContent() {
 
   if (error) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F172A', padding: 20 }}>
-        <Text style={{ color: '#EF4444', fontSize: 18, marginBottom: 10 }}>App Error</Text>
-        <Text style={{ color: '#F8FAFC', textAlign: 'center' }}>{error}</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface, padding: 20 }}>
+        <Text style={{ color: colors.error, fontSize: 18, marginBottom: 10 }}>App Error</Text>
+        <Text style={{ color: colors.onSurface, textAlign: 'center' }}>{error}</Text>
       </View>
     );
   }
 
-  if (!ready) {
+  if (!ready || !fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F172A' }}>
-        <Text style={{ color: '#F8FAFC' }}>Loading...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface }}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#0F172A',
+            backgroundColor: colors.surface,
           },
-          headerTintColor: '#F8FAFC',
+          headerTintColor: colors.onSurface,
           headerTitleStyle: {
             fontWeight: '600',
+            fontFamily: 'Manrope_600SemiBold',
           },
           contentStyle: {
-            backgroundColor: '#0F172A',
+            backgroundColor: colors.surface,
           },
+          headerShadowVisible: false,
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -92,4 +122,3 @@ function RootLayoutContent() {
 
 // Wrap with Sentry for automatic error boundary
 export default Sentry.wrap(RootLayoutContent);
-}

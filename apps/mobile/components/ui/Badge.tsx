@@ -1,18 +1,41 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { COLORS, STATUS_COLORS, VERIFY_COLORS } from '@/utils/constants';
+import { View, Text, ViewStyle } from 'react-native';
+import { useTheme } from '@/stores/themeStore';
 import { LorStatus, VerifyResult } from '@/utils/shared';
 
 interface BadgeProps {
   label: string;
   color?: string;
+  backgroundColor?: string;
   style?: ViewStyle;
 }
 
-export function Badge({ label, color = COLORS.primary, style }: BadgeProps) {
+export function Badge({ label, color, backgroundColor, style }: BadgeProps) {
+  const { colors, typography, radius } = useTheme();
+  const textColor = color || colors.primary;
+  const bgColor = backgroundColor || (textColor + '1A'); // 10% opacity fallback
+
   return (
-    <View style={[styles.badge, { backgroundColor: color + '20' }, style]}>
-      <Text style={[styles.text, { color }]}>{label}</Text>
+    <View
+      style={[
+        {
+          paddingHorizontal: 12,
+          paddingVertical: 5,
+          borderRadius: radius.full,
+          alignSelf: 'flex-start',
+          backgroundColor: bgColor,
+        },
+        style,
+      ]}
+    >
+      <Text
+        style={{
+          ...typography.labelSm,
+          color: textColor,
+        }}
+      >
+        {label}
+      </Text>
     </View>
   );
 }
@@ -23,17 +46,38 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, style }: StatusBadgeProps) {
-  const labels: Record<LorStatus, string> = {
-    SUBMITTED: 'Pending',
-    APPROVED: 'Approved',
-    REJECTED: 'Rejected',
-    REVOKED: 'Revoked',
+  const { colors } = useTheme();
+
+  const config: Record<LorStatus, { label: string; color: string; bg: string }> = {
+    SUBMITTED: {
+      label: 'PENDING',
+      color: colors.primary,
+      bg: colors.primaryContainer,
+    },
+    APPROVED: {
+      label: 'VERIFIED',
+      color: colors.secondary,
+      bg: colors.secondaryContainer,
+    },
+    REJECTED: {
+      label: 'REJECTED',
+      color: colors.error,
+      bg: colors.errorContainer + '40', // 25% opacity
+    },
+    REVOKED: {
+      label: 'REVOKED',
+      color: colors.outline,
+      bg: colors.surfaceContainerHigh,
+    },
   };
+
+  const { label, color, bg } = config[status];
 
   return (
     <Badge
-      label={labels[status]}
-      color={STATUS_COLORS[status]}
+      label={label}
+      color={color}
+      backgroundColor={bg}
       style={style}
     />
   );
@@ -45,30 +89,34 @@ interface VerifyBadgeProps {
 }
 
 export function VerifyBadge({ result, style }: VerifyBadgeProps) {
-  const labels: Record<VerifyResult, string> = {
-    VERIFIED: 'Verified',
-    NOT_FOUND: 'Not Found',
-    REVOKED: 'Revoked',
+  const { colors } = useTheme();
+
+  const config: Record<VerifyResult, { label: string; color: string; bg: string }> = {
+    VERIFIED: {
+      label: 'VERIFIED ON LEDGER',
+      color: colors.secondary,
+      bg: colors.secondaryContainer,
+    },
+    NOT_FOUND: {
+      label: 'NOT FOUND',
+      color: colors.error,
+      bg: colors.errorContainer + '40',
+    },
+    REVOKED: {
+      label: 'REVOKED',
+      color: colors.outline,
+      bg: colors.surfaceContainerHigh,
+    },
   };
+
+  const { label, color, bg } = config[result];
 
   return (
     <Badge
-      label={labels[result]}
-      color={VERIFY_COLORS[result]}
+      label={label}
+      color={color}
+      backgroundColor={bg}
       style={style}
     />
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-  },
-  text: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-});

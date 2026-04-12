@@ -1,21 +1,22 @@
 import { useState } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
-import { COLORS } from '@/utils/constants';
+import { useTheme } from '@/stores/themeStore';
 
 export default function CreateInstitutionScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { colors, typography, spacing } = useTheme();
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [domain, setDomain] = useState('');
-  
+
   // First admin details
   const [adminEmail, setAdminEmail] = useState('');
   const [adminName, setAdminName] = useState('');
@@ -62,8 +63,15 @@ export default function CreateInstitutionScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Card style={styles.section}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.surface }}
+      contentContainerStyle={{ padding: spacing.xl }}
+    >
+      {/* Institution Details */}
+      <Text style={{ ...typography.labelLg, color: colors.onSurfaceVariant, marginBottom: spacing.sm }}>
+        Institution Details
+      </Text>
+      <Card style={{ marginBottom: spacing.md }}>
         <Input
           label="Institution Name"
           placeholder="e.g., Demo University"
@@ -83,10 +91,15 @@ export default function CreateInstitutionScreen() {
           value={domain}
           onChangeText={setDomain}
           autoCapitalize="none"
+          containerStyle={{ marginBottom: 0 }}
         />
       </Card>
 
-      <Card style={styles.section}>
+      {/* First Admin */}
+      <Text style={{ ...typography.labelLg, color: colors.onSurfaceVariant, marginBottom: spacing.sm }}>
+        First Administrator
+      </Text>
+      <Card style={{ marginBottom: spacing.xl }}>
         <Input
           label="Admin Name"
           placeholder="First admin's full name"
@@ -107,6 +120,7 @@ export default function CreateInstitutionScreen() {
           value={adminPassword}
           onChangeText={setAdminPassword}
           secureTextEntry
+          containerStyle={{ marginBottom: 0 }}
         />
       </Card>
 
@@ -119,16 +133,3 @@ export default function CreateInstitutionScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    padding: 16,
-  },
-  section: {
-    marginBottom: 16,
-  },
-});

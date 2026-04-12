@@ -1,15 +1,15 @@
-import { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
+import { useCallback } from 'react';
+import { View, Text, FlatList, RefreshControl } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { lorService } from '@/services/lor.service';
 import { LorCard } from '@/components/LorCard';
-import { COLORS } from '@/utils/constants';
-import { useAuthStore } from '@/stores/authStore';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { useTheme } from '@/stores/themeStore';
 
 export default function TeacherDashboard() {
   const router = useRouter();
-  const { logout } = useAuthStore();
+  const { colors, typography, spacing } = useTheme();
 
   const { data: lors, isLoading, refetch } = useQuery({
     queryKey: ['teacher-lors'],
@@ -27,35 +27,45 @@ export default function TeacherDashboard() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Letters of Recommendation</Text>
-        <TouchableOpacity onPress={logout}>
-          <Text style={styles.logout}>Logout</Text>
-        </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      {/* Header */}
+      <View
+        style={{
+          paddingHorizontal: spacing.xl,
+          paddingTop: spacing['4xl'] + 16,
+          paddingBottom: spacing.lg,
+        }}
+      >
+        <Text style={{ ...typography.displayMd, color: colors.onSurface }}>
+          My Letters
+        </Text>
+        <Text style={{ ...typography.bodyLg, color: colors.onSurfaceVariant, marginTop: spacing.xxs }}>
+          Letters of recommendation you've written
+        </Text>
       </View>
 
       {lors && lors.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>📄</Text>
-          <Text style={styles.emptyText}>No LORs yet</Text>
-          <Text style={styles.emptySubtext}>
-            Upload your first letter of recommendation
-          </Text>
-        </View>
+        <EmptyState
+          icon="📝"
+          title="No LORs yet"
+          message="Upload your first letter of recommendation"
+        />
       ) : (
         <FlatList
           data={lors}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <LorCard lor={item} onPress={() => handleLorPress(item.id)} showStudent />
+            <View style={{ paddingHorizontal: spacing.xl }}>
+              <LorCard lor={item} onPress={() => handleLorPress(item.id)} showStudent />
+            </View>
           )}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={{ paddingTop: spacing.xs, paddingBottom: spacing['2xl'] }}
           refreshControl={
             <RefreshControl
               refreshing={isLoading}
               onRefresh={refetch}
-              tintColor={COLORS.primary}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
             />
           }
         />
@@ -63,49 +73,3 @@ export default function TeacherDashboard() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  logout: {
-    color: COLORS.danger,
-    fontSize: 14,
-  },
-  list: {
-    padding: 16,
-  },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-  },
-});

@@ -1,16 +1,17 @@
-import { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/stores/themeStore';
 import { Role } from '@/utils/shared';
 
 export default function Index() {
   const { isAuthenticated, isLoading, user } = useAuthStore();
+  const { colors } = useTheme();
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#6366F1" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface }}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -35,12 +36,3 @@ export default function Index() {
       return <Redirect href="/(auth)/login" />;
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#0F172A',
-  },
-});

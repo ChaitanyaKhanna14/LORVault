@@ -1,8 +1,9 @@
-import { View, Text, FlatList, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { notificationService } from '@/services/notification.service';
 import { Card } from '@/components/ui/Card';
-import { COLORS } from '@/utils/constants';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { useTheme } from '@/stores/themeStore';
 import { formatDateTime } from '@/utils/formatters';
 import { NotificationType } from '@/utils/shared';
 
@@ -19,6 +20,8 @@ const getNotificationIcon = (type: NotificationType) => {
 };
 
 export default function NotificationsScreen() {
+  const { colors, typography, spacing, radius } = useTheme();
+
   const { data: notifications, isLoading, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => notificationService.getAll(),
@@ -35,44 +38,80 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
       {notifications && notifications.length > 0 && (
-        <View style={styles.header}>
+        <View style={{ padding: spacing.md, alignItems: 'flex-end' }}>
           <TouchableOpacity onPress={handleMarkAllRead}>
-            <Text style={styles.markAllRead}>Mark all as read</Text>
+            <Text style={{ ...typography.labelLg, color: colors.primary }}>
+              Mark all as read
+            </Text>
           </TouchableOpacity>
         </View>
       )}
 
       {notifications && notifications.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>🔔</Text>
-          <Text style={styles.emptyText}>No notifications</Text>
-        </View>
+        <EmptyState
+          icon="🔔"
+          title="No notifications"
+          message="You're all caught up! New notifications will appear here."
+        />
       ) : (
         <FlatList
           data={notifications}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handleMarkRead(item.id)}>
-              <Card style={[styles.notification, !item.read && styles.unread]}>
-                <View style={styles.notificationContent}>
-                  <Text style={styles.icon}>{getNotificationIcon(item.type)}</Text>
-                  <View style={styles.textContent}>
-                    <Text style={styles.title}>{item.title}</Text>
-                    <Text style={styles.body}>{item.body}</Text>
-                    <Text style={styles.time}>{formatDateTime(item.createdAt)}</Text>
+            <TouchableOpacity
+              onPress={() => handleMarkRead(item.id)}
+              style={{ paddingHorizontal: spacing.md }}
+            >
+              <Card
+                variant={item.read ? 'elevated' : 'filled'}
+                style={{
+                  ...(!item.read && {
+                    backgroundColor: colors.primaryContainer + '30',
+                    borderLeftWidth: 3,
+                    borderLeftColor: colors.primary,
+                  }),
+                }}
+              >
+                <View style={{ flexDirection: 'row' }}>
+                  <Text style={{ fontSize: 24, marginRight: spacing.sm }}>
+                    {getNotificationIcon(item.type)}
+                  </Text>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        ...typography.titleSm,
+                        color: colors.onSurface,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {item.title}
+                    </Text>
+                    <Text
+                      style={{
+                        ...typography.bodyMd,
+                        color: colors.onSurfaceVariant,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {item.body}
+                    </Text>
+                    <Text style={{ ...typography.bodySm, color: colors.outline }}>
+                      {formatDateTime(item.createdAt)}
+                    </Text>
                   </View>
                 </View>
               </Card>
             </TouchableOpacity>
           )}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={{ paddingTop: spacing.xs, paddingBottom: spacing['2xl'] }}
           refreshControl={
             <RefreshControl
               refreshing={isLoading}
               onRefresh={refetch}
-              tintColor={COLORS.primary}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
             />
           }
         />
@@ -80,67 +119,3 @@ export default function NotificationsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    padding: 16,
-    alignItems: 'flex-end',
-  },
-  markAllRead: {
-    color: COLORS.primary,
-    fontSize: 14,
-  },
-  list: {
-    padding: 16,
-  },
-  notification: {
-    marginBottom: 8,
-  },
-  unread: {
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.primary,
-  },
-  notificationContent: {
-    flexDirection: 'row',
-  },
-  icon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  textContent: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  body: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    marginBottom: 4,
-    lineHeight: 18,
-  },
-  time: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-  },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyText: {
-    fontSize: 18,
-    color: COLORS.textMuted,
-  },
-});

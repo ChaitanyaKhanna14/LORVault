@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, StyleSheet, ViewStyle } from 'react-native';
-import { COLORS } from '@/utils/constants';
+import { View, Animated, ViewStyle } from 'react-native';
+import { useTheme } from '@/stores/themeStore';
 
 interface SkeletonProps {
   width?: number | string;
@@ -9,12 +9,13 @@ interface SkeletonProps {
   style?: ViewStyle;
 }
 
-export function Skeleton({ 
-  width = '100%', 
-  height = 20, 
+export function Skeleton({
+  width = '100%',
+  height = 20,
   borderRadius = 8,
-  style 
+  style,
 }: SkeletonProps) {
+  const { colors } = useTheme();
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -39,10 +40,10 @@ export function Skeleton({
   return (
     <Animated.View
       style={[
-        styles.skeleton,
-        { 
-          width, 
-          height, 
+        {
+          backgroundColor: colors.surfaceContainerHigh,
+          width,
+          height,
           borderRadius,
           opacity,
         },
@@ -53,68 +54,59 @@ export function Skeleton({
 }
 
 export function SkeletonCard() {
+  const { colors, radius, spacing } = useTheme();
+
   return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.cardTitle}>
+    <View
+      style={{
+        backgroundColor: colors.surfaceContainerLowest,
+        borderRadius: radius['2xl'],
+        padding: spacing.xl,
+        marginBottom: spacing.md,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: spacing.md,
+        }}
+      >
+        <View style={{ flex: 1, marginRight: spacing.sm }}>
           <Skeleton height={18} width="70%" style={{ marginBottom: 8 }} />
           <Skeleton height={14} width="40%" />
         </View>
-        <Skeleton width={80} height={24} borderRadius={12} />
+        <Skeleton width={80} height={26} borderRadius={9999} />
       </View>
-      <View style={styles.cardDetails}>
+      <View
+        style={{
+          backgroundColor: colors.surfaceContainerLow,
+          borderRadius: radius.md,
+          padding: spacing.sm,
+          marginBottom: spacing.md,
+        }}
+      >
         <Skeleton height={14} width="60%" style={{ marginBottom: 8 }} />
         <Skeleton height={14} width="50%" style={{ marginBottom: 8 }} />
         <Skeleton height={14} width="45%" />
       </View>
-      <View style={styles.cardActions}>
-        <Skeleton height={44} style={{ flex: 1, marginRight: 8 }} borderRadius={12} />
-        <Skeleton height={44} style={{ flex: 1 }} borderRadius={12} />
+      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+        <Skeleton height={48} style={{ flex: 1 }} borderRadius={9999} />
+        <Skeleton height={48} style={{ flex: 1 }} borderRadius={9999} />
       </View>
     </View>
   );
 }
 
 export function SkeletonList({ count = 3 }: { count?: number }) {
+  const { spacing } = useTheme();
+
   return (
-    <View style={styles.list}>
+    <View style={{ padding: spacing.md }}>
       {Array.from({ length: count }).map((_, index) => (
         <SkeletonCard key={index} />
       ))}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  skeleton: {
-    backgroundColor: COLORS.surfaceLight,
-  },
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  cardTitle: {
-    flex: 1,
-    marginRight: 12,
-  },
-  cardDetails: {
-    backgroundColor: COLORS.background,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  cardActions: {
-    flexDirection: 'row',
-  },
-  list: {
-    padding: 16,
-  },
-});

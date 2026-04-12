@@ -1,9 +1,9 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Lor } from '@/utils/shared';
 import { Card, CardHeader } from './ui/Card';
 import { StatusBadge } from './ui/Badge';
-import { COLORS } from '@/utils/constants';
+import { useTheme } from '@/stores/themeStore';
 import { formatDate } from '@/utils/formatters';
 
 interface LorCardProps {
@@ -14,6 +14,8 @@ interface LorCardProps {
 }
 
 export function LorCard({ lor, onPress, showStudent = true, showTeacher = false }: LorCardProps) {
+  const { colors, typography, spacing } = useTheme();
+
   return (
     <Card onPress={onPress}>
       <CardHeader
@@ -21,53 +23,36 @@ export function LorCard({ lor, onPress, showStudent = true, showTeacher = false 
         subtitle={lor.subject}
         right={<StatusBadge status={lor.status} />}
       />
-      <View style={styles.details}>
+      <View
+        style={{
+          backgroundColor: colors.surfaceContainerLow,
+          borderRadius: 8,
+          padding: spacing.sm,
+        }}
+      >
         {showStudent && lor.student && (
-          <View style={styles.row}>
-            <Text style={styles.label}>Student:</Text>
-            <Text style={styles.value}>{lor.student.fullName}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+            <Text style={{ ...typography.bodySm, color: colors.onSurfaceVariant }}>Student</Text>
+            <Text style={{ ...typography.bodySm, color: colors.onSurface, fontFamily: 'Inter_500Medium' }}>{lor.student.fullName}</Text>
           </View>
         )}
         {showTeacher && lor.teacher && (
-          <View style={styles.row}>
-            <Text style={styles.label}>Teacher:</Text>
-            <Text style={styles.value}>{lor.teacher.fullName}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+            <Text style={{ ...typography.bodySm, color: colors.onSurfaceVariant }}>Teacher</Text>
+            <Text style={{ ...typography.bodySm, color: colors.onSurface, fontFamily: 'Inter_500Medium' }}>{lor.teacher.fullName}</Text>
           </View>
         )}
-        <View style={styles.row}>
-          <Text style={styles.label}>Submitted:</Text>
-          <Text style={styles.value}>{formatDate(lor.submittedAt)}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: lor.status === 'APPROVED' && lor.approvedAt ? 4 : 0 }}>
+          <Text style={{ ...typography.bodySm, color: colors.onSurfaceVariant }}>Submitted</Text>
+          <Text style={{ ...typography.bodySm, color: colors.onSurface, fontFamily: 'Inter_500Medium' }}>{formatDate(lor.submittedAt)}</Text>
         </View>
         {lor.status === 'APPROVED' && lor.approvedAt && (
-          <View style={styles.row}>
-            <Text style={styles.label}>Approved:</Text>
-            <Text style={styles.value}>{formatDate(lor.approvedAt)}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={{ ...typography.bodySm, color: colors.onSurfaceVariant }}>Approved</Text>
+            <Text style={{ ...typography.bodySm, color: colors.onSurface, fontFamily: 'Inter_500Medium' }}>{formatDate(lor.approvedAt)}</Text>
           </View>
         )}
       </View>
     </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  details: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  label: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-  },
-  value: {
-    fontSize: 13,
-    color: COLORS.text,
-    fontWeight: '500',
-  },
-});

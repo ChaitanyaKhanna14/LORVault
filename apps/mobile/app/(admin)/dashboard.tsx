@@ -1,9 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import { Card } from '@/components/ui/Card';
-import { COLORS } from '@/utils/constants';
-import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/stores/themeStore';
 
 interface Stats {
   totalLors: number;
@@ -15,7 +14,7 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
-  const { logout } = useAuthStore();
+  const { colors, typography, spacing } = useTheme();
 
   const { data: stats, isLoading, refetch } = useQuery<Stats>({
     queryKey: ['admin-stats'],
@@ -25,136 +24,74 @@ export default function AdminDashboard() {
     },
   });
 
+  const statCards = [
+    { label: 'Pending Review', value: stats?.pendingLors, bg: colors.primaryContainer + '40', accent: colors.primary },
+    { label: 'Approved', value: stats?.approvedLors, bg: colors.secondaryContainer + '40', accent: colors.secondary },
+    { label: 'Rejected', value: stats?.rejectedLors, bg: colors.errorContainer + '30', accent: colors.error },
+    { label: 'Total LORs', value: stats?.totalLors, bg: colors.surfaceContainerLow, accent: colors.onSurface },
+  ];
+
   return (
     <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
+      style={{ flex: 1, backgroundColor: colors.surface }}
+      contentContainerStyle={{ paddingBottom: spacing['2xl'] }}
       refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={COLORS.primary} />
+        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={colors.primary} colors={[colors.primary]} />
       }
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>Admin Dashboard</Text>
-        <TouchableOpacity onPress={logout}>
-          <Text style={styles.logout}>Logout</Text>
-        </TouchableOpacity>
+      {/* Header */}
+      <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing['4xl'] + 16, paddingBottom: spacing.lg }}>
+        <Text style={{ ...typography.displayMd, color: colors.onSurface }}>Dashboard</Text>
+        <Text style={{ ...typography.bodyLg, color: colors.onSurfaceVariant, marginTop: spacing.xxs }}>
+          Institution overview
+        </Text>
       </View>
 
-      <View style={styles.statsGrid}>
-        <Card style={[styles.statCard, { borderLeftColor: COLORS.warning }]}>
-          <Text style={styles.statNumber}>{stats?.pendingLors ?? '-'}</Text>
-          <Text style={styles.statLabel}>Pending Review</Text>
-        </Card>
-
-        <Card style={[styles.statCard, { borderLeftColor: COLORS.secondary }]}>
-          <Text style={styles.statNumber}>{stats?.approvedLors ?? '-'}</Text>
-          <Text style={styles.statLabel}>Approved</Text>
-        </Card>
-
-        <Card style={[styles.statCard, { borderLeftColor: COLORS.danger }]}>
-          <Text style={styles.statNumber}>{stats?.rejectedLors ?? '-'}</Text>
-          <Text style={styles.statLabel}>Rejected</Text>
-        </Card>
-
-        <Card style={[styles.statCard, { borderLeftColor: COLORS.primary }]}>
-          <Text style={styles.statNumber}>{stats?.totalLors ?? '-'}</Text>
-          <Text style={styles.statLabel}>Total LORs</Text>
-        </Card>
+      {/* Stats Grid */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: spacing.xl - 6 }}>
+        {statCards.map((stat, index) => (
+          <View key={index} style={{ width: '50%', paddingHorizontal: 6, marginBottom: spacing.sm }}>
+            <Card
+              variant="filled"
+              style={{ backgroundColor: stat.bg, paddingVertical: spacing.lg }}
+            >
+              <Text style={{ ...typography.displayMd, color: stat.accent }}>
+                {stat.value ?? '—'}
+              </Text>
+              <Text style={{ ...typography.labelMd, color: colors.onSurfaceVariant, marginTop: spacing.xxs }}>
+                {stat.label}
+              </Text>
+            </Card>
+          </View>
+        ))}
       </View>
 
-      <Text style={styles.sectionTitle}>Users</Text>
+      {/* Users Section */}
+      <Text
+        style={{
+          ...typography.headlineSm,
+          color: colors.onSurface,
+          paddingHorizontal: spacing.xl,
+          marginTop: spacing.lg,
+          marginBottom: spacing.sm,
+        }}
+      >
+        Users
+      </Text>
 
-      <View style={styles.userStats}>
-        <Card style={styles.userCard}>
-          <Text style={styles.userIcon}>👨‍🏫</Text>
-          <Text style={styles.userNumber}>{stats?.totalTeachers ?? '-'}</Text>
-          <Text style={styles.userLabel}>Teachers</Text>
+      <View style={{ flexDirection: 'row', paddingHorizontal: spacing.xl, gap: spacing.sm }}>
+        <Card style={{ flex: 1, alignItems: 'center', paddingVertical: spacing.lg }}>
+          <Text style={{ fontSize: 32, marginBottom: spacing.xs }}>👨‍🏫</Text>
+          <Text style={{ ...typography.headlineLg, color: colors.onSurface }}>{stats?.totalTeachers ?? '—'}</Text>
+          <Text style={{ ...typography.labelMd, color: colors.onSurfaceVariant, marginTop: 2 }}>Teachers</Text>
         </Card>
 
-        <Card style={styles.userCard}>
-          <Text style={styles.userIcon}>👨‍🎓</Text>
-          <Text style={styles.userNumber}>{stats?.totalStudents ?? '-'}</Text>
-          <Text style={styles.userLabel}>Students</Text>
+        <Card style={{ flex: 1, alignItems: 'center', paddingVertical: spacing.lg }}>
+          <Text style={{ fontSize: 32, marginBottom: spacing.xs }}>👨‍🎓</Text>
+          <Text style={{ ...typography.headlineLg, color: colors.onSurface }}>{stats?.totalStudents ?? '—'}</Text>
+          <Text style={{ ...typography.labelMd, color: colors.onSurfaceVariant, marginTop: 2 }}>Students</Text>
         </Card>
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    padding: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  logout: {
-    color: COLORS.danger,
-    fontSize: 14,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -6,
-  },
-  statCard: {
-    width: '47%',
-    marginHorizontal: '1.5%',
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    padding: 16,
-  },
-  statNumber: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginTop: 16,
-    marginBottom: 12,
-  },
-  userStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  userCard: {
-    flex: 1,
-    marginHorizontal: 6,
-    alignItems: 'center',
-    padding: 20,
-  },
-  userIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  userNumber: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  userLabel: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    marginTop: 4,
-  },
-});

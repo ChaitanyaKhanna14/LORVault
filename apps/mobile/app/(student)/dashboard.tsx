@@ -1,18 +1,21 @@
 import { useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, RefreshControl, TouchableOpacity, Share } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { View, Text, FlatList, RefreshControl } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { lorService } from '@/services/lor.service';
 import { Card } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { COLORS } from '@/utils/constants';
-import { formatDate } from '@/utils/formatters';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { useTheme } from '@/stores/themeStore';
 import { useAuthStore } from '@/stores/authStore';
-import { LorStatus } from '@lorvault/shared';
+import { LorStatus } from '@/utils/shared';
+import { formatDate } from '@/utils/formatters';
+import { Share } from 'react-native';
 
 export default function StudentDashboard() {
-  const { logout } = useAuthStore();
+  const { colors, typography, spacing } = useTheme();
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
   const { data: lors, isLoading, refetch } = useQuery({
@@ -41,100 +44,198 @@ export default function StudentDashboard() {
         url: shareUrl,
       });
     } catch {
-      // Share was cancelled or failed - no action needed
+      // Share was cancelled or failed — no action needed
     }
   };
 
+  const firstName = user?.fullName?.split(' ')[0] || 'Student';
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Letters of Recommendation</Text>
-        <TouchableOpacity onPress={logout}>
-          <Text style={styles.logout}>Logout</Text>
-        </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      {/* Header */}
+      <View
+        style={{
+          paddingHorizontal: spacing.xl,
+          paddingTop: spacing['4xl'] + 16,
+          paddingBottom: spacing.lg,
+          backgroundColor: colors.surface,
+        }}
+      >
+        <Text
+          style={{
+            ...typography.displayMd,
+            color: colors.onSurface,
+          }}
+        >
+          Hello, {firstName}
+        </Text>
+        <Text
+          style={{
+            ...typography.bodyLg,
+            color: colors.onSurfaceVariant,
+            marginTop: spacing.xxs,
+          }}
+        >
+          Your letters of recommendation
+        </Text>
       </View>
 
       {lors && lors.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>📄</Text>
-          <Text style={styles.emptyText}>No LORs yet</Text>
-          <Text style={styles.emptySubtext}>
-            Your teachers haven't submitted any letters of recommendation for you yet.
-          </Text>
-        </View>
+        <EmptyState
+          icon="📄"
+          title="No LORs yet"
+          message="Your teachers haven't submitted any letters of recommendation for you yet."
+        />
       ) : (
         <FlatList
           data={lors}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <Card style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardTitle}>
-                  <Text style={styles.title}>{item.title}</Text>
-                  <Text style={styles.subject}>{item.subject}</Text>
+            <Card style={{ marginHorizontal: spacing.xl }}>
+              {/* Card Header */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: spacing.md,
+                }}
+              >
+                <View style={{ flex: 1, marginRight: spacing.sm }}>
+                  <Text
+                    style={{
+                      ...typography.titleLg,
+                      color: colors.onSurface,
+                      marginBottom: 2,
+                    }}
+                  >
+                    {item.title}
+                  </Text>
+                  <Text
+                    style={{
+                      ...typography.bodyMd,
+                      color: colors.onSurfaceVariant,
+                    }}
+                  >
+                    {item.subject}
+                  </Text>
                 </View>
                 <StatusBadge status={item.status} />
               </View>
 
-              <View style={styles.details}>
-                <Text style={styles.detail}>
-                  <Text style={styles.label}>From: </Text>
+              {/* Details */}
+              <View
+                style={{
+                  backgroundColor: colors.surfaceContainerLow,
+                  borderRadius: 8,
+                  padding: spacing.sm,
+                  marginBottom: spacing.md,
+                }}
+              >
+                <Text
+                  style={{
+                    ...typography.bodySm,
+                    color: colors.onSurface,
+                    marginBottom: 4,
+                  }}
+                >
+                  <Text style={{ color: colors.onSurfaceVariant }}>From: </Text>
                   {item.teacher?.fullName}
                 </Text>
-                <Text style={styles.detail}>
-                  <Text style={styles.label}>Submitted: </Text>
+                <Text
+                  style={{
+                    ...typography.bodySm,
+                    color: colors.onSurface,
+                    marginBottom: item.approvedAt ? 4 : 0,
+                  }}
+                >
+                  <Text style={{ color: colors.onSurfaceVariant }}>Submitted: </Text>
                   {formatDate(item.submittedAt)}
                 </Text>
                 {item.approvedAt && (
-                  <Text style={styles.detail}>
-                    <Text style={styles.label}>Approved: </Text>
+                  <Text
+                    style={{
+                      ...typography.bodySm,
+                      color: colors.onSurface,
+                    }}
+                  >
+                    <Text style={{ color: colors.onSurfaceVariant }}>Approved: </Text>
                     {formatDate(item.approvedAt)}
                   </Text>
                 )}
               </View>
 
+              {/* Actions */}
               {item.status === LorStatus.APPROVED && (
-                <View style={styles.actions}>
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
                   {!item.consent?.acknowledged && (
-                    <Button
-                      title="Acknowledge"
-                      variant="secondary"
-                      onPress={() => acknowledgeMutation.mutate(item.id)}
-                      loading={acknowledgeMutation.isPending}
-                      style={styles.actionButton}
-                    />
+                    <View style={{ flex: 1 }}>
+                      <Button
+                        title="Acknowledge"
+                        variant="secondary"
+                        onPress={() => acknowledgeMutation.mutate(item.id)}
+                        loading={acknowledgeMutation.isPending}
+                      />
+                    </View>
                   )}
-                  <Button
-                    title="Share"
-                    variant="primary"
-                    onPress={() => handleShare(item.id)}
-                    style={styles.actionButton}
-                    disabled={!item.consent?.acknowledged}
-                  />
+                  <View style={{ flex: 1 }}>
+                    <Button
+                      title="Share"
+                      variant="primary"
+                      onPress={() => handleShare(item.id)}
+                      disabled={!item.consent?.acknowledged}
+                    />
+                  </View>
                 </View>
               )}
 
+              {/* Rejection/Revocation reason */}
               {item.status === LorStatus.REJECTED && item.rejectionReason && (
-                <View style={styles.rejection}>
-                  <Text style={styles.rejectionLabel}>Rejection reason:</Text>
-                  <Text style={styles.rejectionText}>{item.rejectionReason}</Text>
+                <View
+                  style={{
+                    backgroundColor: colors.errorContainer + '1A',
+                    borderRadius: 8,
+                    padding: spacing.sm,
+                    borderLeftWidth: 3,
+                    borderLeftColor: colors.error,
+                  }}
+                >
+                  <Text style={{ ...typography.labelMd, color: colors.error, marginBottom: 2 }}>
+                    Rejection reason
+                  </Text>
+                  <Text style={{ ...typography.bodySm, color: colors.onSurface }}>
+                    {item.rejectionReason}
+                  </Text>
                 </View>
               )}
 
               {item.status === LorStatus.REVOKED && item.revokeReason && (
-                <View style={styles.rejection}>
-                  <Text style={styles.rejectionLabel}>Revoked:</Text>
-                  <Text style={styles.rejectionText}>{item.revokeReason}</Text>
+                <View
+                  style={{
+                    backgroundColor: colors.surfaceContainerHigh,
+                    borderRadius: 8,
+                    padding: spacing.sm,
+                    borderLeftWidth: 3,
+                    borderLeftColor: colors.outline,
+                  }}
+                >
+                  <Text style={{ ...typography.labelMd, color: colors.outline, marginBottom: 2 }}>
+                    Revoked
+                  </Text>
+                  <Text style={{ ...typography.bodySm, color: colors.onSurface }}>
+                    {item.revokeReason}
+                  </Text>
                 </View>
               )}
             </Card>
           )}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={{ paddingTop: spacing.xs, paddingBottom: spacing['2xl'] }}
           refreshControl={
             <RefreshControl
               refreshing={isLoading}
               onRefresh={refetch}
-              tintColor={COLORS.primary}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
             />
           }
         />
@@ -142,106 +243,3 @@ export default function StudentDashboard() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  logout: {
-    color: COLORS.danger,
-    fontSize: 14,
-  },
-  list: {
-    padding: 16,
-  },
-  card: {
-    marginBottom: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  cardTitle: {
-    flex: 1,
-    marginRight: 12,
-  },
-  subject: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  details: {
-    backgroundColor: COLORS.background,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  detail: {
-    fontSize: 13,
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  label: {
-    color: COLORS.textMuted,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 10,
-  },
-  rejection: {
-    backgroundColor: COLORS.danger + '10',
-    borderRadius: 8,
-    padding: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.danger,
-  },
-  rejectionLabel: {
-    fontSize: 12,
-    color: COLORS.danger,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  rejectionText: {
-    fontSize: 13,
-    color: COLORS.text,
-  },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-  },
-});
